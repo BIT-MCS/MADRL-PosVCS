@@ -1,10 +1,3 @@
-"""
-# @Time    : 2021/7/1 7:14 下午
-# @Author  : hezhiqiang01
-# @Email   : hezhiqiang01@baidu.com
-# @File    : env_runner.py
-"""
-
 import time
 import wandb
 import os
@@ -16,7 +9,7 @@ import pickle
 from utils.util import update_linear_schedule
 from runner.separated.base_runner import Runner
 import imageio
-import VIME_based_discovery as VI
+import VI
 
 def _t2n(x):
     return x.detach().cpu().numpy()
@@ -33,7 +26,7 @@ class EnvRunner(Runner):
         start = time.time()
         episodes = int(self.num_env_steps) // self.episode_length // self.n_rollout_threads
 
-        # 启用路径储存，储存在同一个run下
+        
         rend = False
         if self.all_args.generate_outputs:
             ret_dict = {'observation':[],'rewards':[],'dones': [],'info':[]}
@@ -47,10 +40,10 @@ class EnvRunner(Runner):
             floor_list = self.envs.env_ref.env.config['floor_list']
             time_interval = self.envs.env_ref.env.config['data_changes_num']
         
-        # BNN Initialize
+        
         transition_prob_model = VI.build_network(32,32,device)
-        #transition_prob_model = VI.build_network(self.envs.env_ref.env.obs_dim, self.envs.env_ref.env.obs_dim,device)
-        #vime_pool = VI.SimpleReplayPool(800,(self.envs.env_ref.env.obs_dim,),self.envs.env_ref.env.config['total_action_dim'])
+        
+        
         vime_pool = VI.SimpleReplayPool(2000,(32,),self.envs.env_ref.env.config['total_action_dim'])
         
         for episode in range(episodes):
@@ -61,10 +54,10 @@ class EnvRunner(Runner):
             previous_obs = self.envs.env_ref.env.initial_obs
             trajectory_median = [[] for _ in range(self.envs.env_ref.env.config['agent_num'])]
             
-            # data_list save all past data
+            
             d_list = []
 
-            # track visits
+            
             track_visit = {en:{i:{uv:{fl:{pois:0 for pois in poi_pos[fl]} for fl in floor_list} for uv in range(agent_num)} \
                            for i in range(time_interval)} for en in range(self.envs.nenvs)}
             track_all = {en:{i:{fl:{pois:0 for pois in poi_pos[fl]} for fl in floor_list} for i in range(time_interval)}for en in range(self.envs.nenvs)}
@@ -73,15 +66,15 @@ class EnvRunner(Runner):
             action_list = []
 
             for step in range(self.episode_length):
-                # Sample actions
+                
                 values, actions, action_log_probs, rnn_states, rnn_states_critic, actions_env = self.collect(step)
 
-                # Obser reward and next obs
+                
                 obs, rewards, dones, infos = self.envs.step(actions_env, rend)
                 obs_list.append(obs)
                 action_list.append(np.array(actions_env))
 
-                # dual updates process
+                
                 if self.envs.env_ref.env.config['use_dual_descent'] and not rend:
                     period = int(step * self.envs.env_ref.env.config['data_changes_num'] /self.episode_length)
                     if self.envs.env_ref.env.config['use_dual_descent']:
@@ -93,7 +86,7 @@ class EnvRunner(Runner):
                                         track_visit[envs][period][uav][pos[0]][pos[1]] = 1
                                         track_all[envs][period][pos[0]][pos[1]] += 1
                 
-                # save if rendering
+                
                 if self.all_args.generate_outputs:
                     ret_dict['observation'].append(obs[0])
                     ret_dict['rewards'].append(rewards[0])
@@ -103,11 +96,11 @@ class EnvRunner(Runner):
                 data = obs, rewards, dones, infos, values, actions, action_log_probs, rnn_states, rnn_states_critic
                 d_list.append(data)
 
-                #insert data into buffer
+                
                 self.insert(data)
 
-            # post updates of rewards
-            modified_rewards = np.zeros([rewards.shape[1],len(d_list),self.envs.nenvs,1]) # UV,step,reward
+            
+            modified_rewards = np.zeros([rewards.shape[1],len(d_list),self.envs.nenvs,1]) 
             for agents in range(rewards.shape[1]):
                     for i in range(len(d_list)):                      
                         for num_envs in range(rewards.shape[0]):      
@@ -121,7 +114,7 @@ class EnvRunner(Runner):
                     for step in range(len(d_list)):
                         interval = int(step * self.envs.env_ref.env.config['data_changes_num'] /self.episode_length)
                         if interval not in period_reward.keys():
-                            # 这里需要决定下如果多个智能体都经过一个点怎么算，目前是都算（理论上该只算第一个）
+                            
                             period_reward[interval] = np.zeros([len(d_list),self.envs.num_envs,1])
                         for agent in range(agent_num):
                             for fl in floor_list:
@@ -149,11 +142,6 @@ class EnvRunner(Runner):
                                         deltavis_dict[envs][i][fl][pos] = track_all[envs][i][fl][pos] - 1
                                         break
                 
-                # self.update_rewards(modified_rewards)
-                # compute return and update network
-            
-
-                # 如果使用dual descent，要在这里要对lambda提升
                 for envs in range(self.envs.num_envs):
                     curr_env = self.envs._compute_lambda_updates(deltavis_dict[envs], index = envs)
 
@@ -165,9 +153,9 @@ class EnvRunner(Runner):
                     obs = obs_list[i]
                     act = action_list[i]
 
-                    for x in range(obs.shape[0]): #envs
-                        for y in range(obs.shape[1]): #agents
-                            newobs = self.envs._vime_obs_process(obs[x,y,:],act[x,y,:],index = x) #agents,obslen
+                    for x in range(obs.shape[0]): 
+                        for y in range(obs.shape[1]): 
+                            newobs = self.envs._vime_obs_process(obs[x,y,:],act[x,y,:],index = x) 
                             new_obslist[(x,y)] = newobs
                             vime_pool.add_sample(newobs[y,:],actions[x,y,:],rewards[x,y,:],dones[x,y])
                     if i > 0:
@@ -181,21 +169,21 @@ class EnvRunner(Runner):
             self.update_rewards(modified_rewards)
             md = VI.convert_to_mean_nn(transition_prob_model)
             print(torch.round(md(torch.tensor(self.envs._vime_obs_process(obs_list[0][0,0,:],action_list[0][0,0,:],index = 0)).float())))
-            # IPPO train
+            
             train_infos = self.train()
 
-            # trainning BNN
+            
             if self.envs.env_ref.env.config['use_vime']:
                 VI.compute(transition_prob_model, vime_pool)
 
-            # post process
+            
             total_num_steps = (episode + 1) * self.episode_length * self.n_rollout_threads
 
-            # save model
+            
             if (episode % self.save_interval == 0 or episode == episodes - 1):
                 self.save()
 
-            # log information
+            
             if episode % self.log_interval == 0:
                 end = time.time()
                 print("\n Scenario {} Algo {} Exp {} updates {}/{} episodes, total num timesteps {}/{}, FPS {}.\n"
@@ -208,29 +196,25 @@ class EnvRunner(Runner):
                               self.num_env_steps,
                               int(total_num_steps / (end - start))))
 
-                #if self.env_name == "MPE":
+                
                 for agent_id in range(self.num_agents):
-                    # idv_rews = []
-                    # for info in infos:
-                    #     if 'individual_reward' in info[agent_id].keys():
-                    #         idv_rews.append(info[agent_id]['individual_reward'])
-                    # train_infos[agent_id].update({'individual_rewards': np.mean(idv_rews)})
+     
                     train_infos[agent_id].update(
                         {"average_episode_rewards": np.mean(self.buffer[agent_id].rewards) * self.episode_length})
                     print("episode rewards for agent {} is {}".format(agent_id, train_infos[agent_id]["average_episode_rewards"]))
                 
                 self.log_train(train_infos, total_num_steps)
             
-                # 环境中的信息总结
+                
                 if episode % (10 * self.log_interval):
                     self.envs.env_ref.env._runtime_summary()
 
-            # eval
+            
             if episode % self.eval_interval == 0 and self.use_eval:
                 self.eval(total_num_steps)
 
         if self.all_args.generate_outputs:
-        # 储存数据到指定路径
+        
             try:
                 os.remove('./intermediate/data/generate_dict.pickle')
             except OSError as e:
@@ -240,7 +224,7 @@ class EnvRunner(Runner):
                 pickle.dump(ret_dict, f)
 
     def warmup(self):
-        # reset env
+        
         obs = self.envs.reset()
 
         share_obs = []
@@ -273,10 +257,10 @@ class EnvRunner(Runner):
                                                             self.buffer[agent_id].masks[step],
                                                             available_actions = self.buffer[agent_id].available_actions[step])
             
-            # [agents, envs, dim]
+            
             values.append(_t2n(value))
             action = _t2n(action)
-            # rearrange action
+            
             if self.envs.action_space[agent_id].__class__.__name__ == 'MultiDiscrete':
                 for i in range(self.envs.action_space[agent_id].shape):
                     uc_action_env = np.eye(self.envs.action_space[agent_id].high[i] + 1)[action[:, i]]
@@ -287,9 +271,9 @@ class EnvRunner(Runner):
             elif self.envs.action_space[agent_id].__class__.__name__ == 'Discrete':
                 action_env = np.squeeze(np.eye(self.envs.action_space[agent_id].n)[action], 1)
             else:
-                # TODO 这里改造成自己环境需要的形式即可
+                
                 action_env = actions
-                # raise NotImplementedError
+                
 
             actions.append(action)
             temp_actions_env.append(action_env)
@@ -297,7 +281,7 @@ class EnvRunner(Runner):
             rnn_states.append(_t2n(rnn_state))
             rnn_states_critic.append(_t2n(rnn_state_critic))
 
-        # [envs, agents, dim]
+        
         actions_env = []
         for i in range(self.n_rollout_threads):
             one_hot_action_env = []
@@ -332,10 +316,10 @@ class EnvRunner(Runner):
             if not self.use_centralized_V:
                 share_obs = np.array(list(obs[:, agent_id]))
             
-            # 在这里加进去mask的内容, 原来没有
+            
             if self.envs.env_ref.env.config['use_masked_action']:
                 masked = np.zeros((len(infos), len(infos[0]), self.envs.env_ref.env.config['total_action_dim']))
-                # TODO：没准有点慢，考虑vectorize
+                
                 for i in range(len(infos)):
                     for j in range(len(infos[0])):
                         masked[i,j,:] = np.array(infos[i][j]['available_actions'])
@@ -355,7 +339,7 @@ class EnvRunner(Runner):
 
     def update_rewards(self, new_reward):
         for agent_id in range(self.num_agents):
-            # envs updates is included size: (step, nenvs, 1)
+            
             self.buffer[agent_id].update_rewards(new_reward[agent_id])
 
     @torch.no_grad()
@@ -377,7 +361,7 @@ class EnvRunner(Runner):
                                                                                 deterministic=True)
 
                 eval_action = eval_action.detach().cpu().numpy()
-                # rearrange action
+                
                 if self.eval_envs.action_space[agent_id].__class__.__name__ == 'MultiDiscrete':
                     for i in range(self.eval_envs.action_space[agent_id].shape):
                         eval_uc_action_env = np.eye(self.eval_envs.action_space[agent_id].high[i] + 1)[
@@ -394,7 +378,7 @@ class EnvRunner(Runner):
                 eval_temp_actions_env.append(eval_action_env)
                 eval_rnn_states[:, agent_id] = _t2n(eval_rnn_state)
 
-            # [envs, agents, dim]
+            
             eval_actions_env = []
             for i in range(self.n_eval_rollout_threads):
                 eval_one_hot_action_env = []
@@ -402,7 +386,7 @@ class EnvRunner(Runner):
                     eval_one_hot_action_env.append(eval_temp_action_env[i])
                 eval_actions_env.append(eval_one_hot_action_env)
 
-            # Obser reward and next obs
+            
             eval_obs, eval_rewards, eval_dones, eval_infos = self.eval_envs.step(eval_actions_env)
             eval_episode_rewards.append(eval_rewards)
 
@@ -449,7 +433,7 @@ class EnvRunner(Runner):
                                                                           deterministic=True)
 
                     action = action.detach().cpu().numpy()
-                    # rearrange action
+                    
                     if self.envs.action_space[agent_id].__class__.__name__ == 'MultiDiscrete':
                         for i in range(self.envs.action_space[agent_id].shape):
                             uc_action_env = np.eye(self.envs.action_space[agent_id].high[i] + 1)[action[:, i]]
@@ -465,7 +449,7 @@ class EnvRunner(Runner):
                     temp_actions_env.append(action_env)
                     rnn_states[:, agent_id] = _t2n(rnn_state)
 
-                # [envs, agents, dim]
+                
                 actions_env = []
                 for i in range(self.n_rollout_threads):
                     one_hot_action_env = []
@@ -473,7 +457,7 @@ class EnvRunner(Runner):
                         one_hot_action_env.append(temp_action_env[i])
                     actions_env.append(one_hot_action_env)
 
-                # Obser reward and next obs
+                
                 obs, rewards, dones, infos = self.envs.step(actions_env)
                 episode_rewards.append(rewards)
 

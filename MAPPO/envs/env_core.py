@@ -25,7 +25,7 @@ from MAPPO.env_config import F2_3_floors
 import site2_handcraft as handcraft
 import cvxpy as cp
 from skimage.draw import line
-import VIME_based_discovery as VI
+import VI
 from statistics import median
 import torch
 
