@@ -1,7 +1,3 @@
-# 先将VIME迁移过来
-# 多智能体的部分当成几个不同的sampler处理
-# 再考虑如何跟电梯结合
-
 import numpy as np
 from sklearn import datasets
 import torch
@@ -14,7 +10,6 @@ from statistics import median
 from torchhk import transform_model
 
 def get_all_thetas(model):
-    # 取出所有的含有bayes参数
     ret = []
     for layers in model:
         if isinstance(layers,(bnn.BayesLinear, bnn.BayesConv2d)):
@@ -22,7 +17,6 @@ def get_all_thetas(model):
     return ret
 
 def copy_theta(sets):
-    # 返回list of dictionary 按model 顺序排列的layers层
     ret = []
     for layers in sets:
         w_mu = torch.clone(layers.weight_mu)
@@ -35,15 +29,7 @@ def copy_theta(sets):
 def log_to_std(rho):
     return torch.exp(rho)
 
-def std_to_log(sigma):
-    pass
-    #return np.log(np.exp(sigma) - 1)
-
 def compute_KL_Gaussians(sets1, sets2):
-    # 计算 KL（sets1||sets2),其中sets1，sets2是所有含有bayes的层
-    # 变分设计为gaussians，有closed form
-    # 这里不用hessian估算
-
     length = len(sets1)
     total = 0
     param_num = 0
@@ -62,7 +48,6 @@ def compute_KL_Gaussians(sets1, sets2):
             + torch.sum(2*torch.log(w_sigma2 /w_sigma1)) + torch.sum(2*torch.log(b_sigma2/b_sigma1))\
             + torch.sum(torch.square(w_mu1 - w_mu2)/torch.square(w_sigma2))  + torch.sum(torch.square(b_mu1 - b_mu2)/torch.square(b_sigma2)))
         total += local
-    #(total/2,param_num/2)
     total = total/2 - param_num/2
     return total
 
@@ -73,14 +58,11 @@ def KL_preprocess(model,inputs, outputs):
     pre = model(inputs)
     mse_loss = nn.MSELoss()
     kl_loss = bnn.BKLLoss(reduction='mean', last_layer_only=False)
-    #print(kl_loss, kl_loss(model),pre)
     optimizer = optim.Adam(model.parameters(), lr=0.01)
     kl_weight = 0.01
     kl = kl_loss(model)
     ce = mse_loss(pre, outputs)
     cost = ce + kl_weight*kl
-    #print(cost.shape,kl.shape)
-    # 计算一下新的gradient
     optimizer.zero_grad()
     cost.backward()
     
@@ -93,11 +75,6 @@ def fisher_information_KL_approximate(all_layers):
         grad_w_log_sigma = torch.flatten(layers.weight_log_sigma.grad)
         grad_b_mu = torch.flatten(layers.bias_mu.grad)
         grad_b_log_sigma = torch.flatten(layers.bias_log_sigma.grad)
-
-        # hessian_w_mu = 1/torch.square(torch.log(1+torch.flatten(torch.exp(layers.weight_log_sigma))))
-        # hessian_w_sigma = hessian_w_mu* 2* torch.exp(2* torch.flatten(torch.exp(layers.weight_log_sigma)))/ torch.square(1+torch.flatten(torch.exp(layers.weight_log_sigma)))
-        # hessian_b_mu = 1/torch.square(torch.log(1+torch.flatten(torch.exp(layers.bias_log_sigma))))
-        # hessian_b_sigma = hessian_b_mu* 2* torch.exp(2* torch.flatten(torch.exp(layers.bias_log_sigma)))/ torch.square(1+torch.flatten(torch.exp(layers.bias_log_sigma)))
 
         hessian_w_mu = 1/torch.square(torch.flatten(torch.exp(layers.weight_log_sigma)))
         hessian_w_sigma = 1/2 * torch.square(hessian_w_mu)
@@ -148,10 +125,6 @@ def build_network(in_dim,out_dim,device):
         bnn.BayesLinear(prior_mu=0, prior_sigma=0.01, in_features=in_dim, out_features=50),
         nn.ReLU(),
         bnn.BayesLinear(prior_mu=0, prior_sigma=0.01, in_features=50, out_features=50),
-        # nn.ReLU(),
-        # bnn.BayesLinear(prior_mu=0, prior_sigma=0.01, in_features=100, out_features=100),
-        # nn.ReLU(),
-        # bnn.BayesLinear(prior_mu=0, prior_sigma=0.01, in_features=100, out_features=50),
         nn.ReLU(),
         bnn.BayesLinear(prior_mu=0, prior_sigma=0.01, in_features=50, out_features=out_dim),
     )
@@ -160,19 +133,16 @@ def build_network(in_dim,out_dim,device):
     return model.to(device=device)
 
 def compute(model,buffer,train_size = 10):
-    # 对网络进行更新
     mse_loss = nn.MSELoss()
     kl_loss = bnn.BKLLoss(reduction='mean', last_layer_only=False)
     optimizer = optim.Adam(model.parameters(), lr=0.01)
     kl_weight = 0.01
     batches_num = 30
-    #all_layers = get_all_thetas(model)
-    #old_params = copy_theta(all_layers)
+
     lastce = 0
     for _ in range(batches_num):
         samples = buffer.random_batch(400)
         for _ in range(train_size):
-            #print(samples['observations'])
             pre = model(torch.from_numpy(samples['observations']).float())
             ce = mse_loss(pre, torch.from_numpy(samples['next_observations']).float())
             lastce = ce
@@ -181,29 +151,16 @@ def compute(model,buffer,train_size = 10):
             optimizer.zero_grad()
             cost.backward()
             optimizer.step()
-            #print(fisher_information_KL_approximate(all_layers))
-            #new_params = copy_theta(all_layers)
-            #print(old_params[0]['w_log_sigma'], new_params[0]['w_log_sigma'])
-
-            #KL = compute_KL_Gaussians(new_params,old_params)
-            #old_params = new_params
-            #print(kl,KL,fisher_information_KL_approximate(all_layers))
     print('LAST MODEL_CE\n', lastce)
 
 def determine_vime_reward(data):
-    # 计算local的奖励，用KL来近似提高运算速度
     uav_idx, bnn_model, current_obs, next_obs, trajectory_median = data
-    # print(current_obs.shape)
     KL_preprocess(bnn_model, current_obs, next_obs)
-    #KL0 = fisher_information_KL_approximate(get_all_thetas(bnn_model))
     KL = speedy_fisher(get_all_thetas(bnn_model))
-    # print(KL)
     if len(trajectory_median[uav_idx]) == 0:
         reward = min(KL,1)
     else:
         reward = KL/median(trajectory_median[uav_idx])
-    # print(reward)
-    # 更新trajectory_mean
     trajectory_median[uav_idx].append(KL)
     if len(trajectory_median[uav_idx]) > 40:
         trajectory_median[uav_idx].pop(0)
@@ -211,11 +168,9 @@ def determine_vime_reward(data):
     return reward, trajectory_median
 
 def determine_vime_reward_batch(data):
-    # 计算local的奖励，用KL来近似提高运算速度,batch版本，
     uav_idx, bnn_model, current_obs, next_obs = data
     print(current_obs.shape)
     KL_preprocess(bnn_model, current_obs, next_obs)
-    #KL0 = fisher_information_KL_approximate(get_all_thetas(bnn_model))
     KL = speedy_fisher(get_all_thetas(bnn_model))
     trajectory_median = [[] for _ in range(current_obs.shape[0])]
 
@@ -224,8 +179,7 @@ def determine_vime_reward_batch(data):
         reward = min(KL,1)
     else:
         reward = KL/median(trajectory_median[uav_idx])
-        # print(reward)
-        # 更新trajectory_mean
+
     trajectory_median[uav_idx].append(KL)
     if len(trajectory_median[uav_idx]) > 40:
         trajectory_median[uav_idx].pop(0)
@@ -274,9 +228,6 @@ class SimpleReplayPool(object):
 
     def add_sample(self, observation, action, reward, terminal):
         self._observations[self._top] = observation
-        # self._actions[self._top] = action
-        # self._rewards[self._top] = reward
-        # self._terminals[self._top] = terminal
         self._top = (self._top + 1) % self._max_pool_size
         if self._size >= self._max_pool_size:
             self._bottom = (self._bottom + 1) % self._max_pool_size
