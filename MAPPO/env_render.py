@@ -3,11 +3,14 @@ from pygame.locals import *
 import sys
 import numpy as np
 import pickle
-sys.path.append('./prepare_data')
 from prepare_for_rendering import take_away_dict_postprocess
 import scipy.spatial as spt
 import paramiko
 import os
+cwd = os.getcwd()
+sys.path.append(os.path.join(cwd, 'MAPPO'))
+sys.path.append(os.path.join(cwd, 'prepare_data'))
+sys.path.append(os.path.join(cwd, 'MI_intrinsic'))
 import cv2 as cv
 
 WIDTH = 1035
@@ -46,8 +49,7 @@ OBSTACLE= [[28.39,6.64,36.87,8.85],
                     [20.02,34.88,34.99,38.53]]
 INDEX_CONVERT = []
 
-FLOOR_NUM = 3 #换新图的时候 记得改这个
-
+FLOOR_NUM = 2
 
 class UAV(pygame.sprite.Sprite):
     # sprite for the Player
