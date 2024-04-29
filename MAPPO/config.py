@@ -218,7 +218,7 @@ def get_config():
     parser.add_argument("--use_recurrent_policy", action='store_false',
                         default=True, help='use a recurrent policy')
     parser.add_argument("--recurrent_N", type=int, default=1, help="The number of recurrent layers.")
-    parser.add_argument("--data_chunk_length", type=int, default=10,                        # 这个理论上是个动态的，或者一次数据的变化时间
+    parser.add_argument("--data_chunk_length", type=int, default=10,                       
                         help="Time length of chunks used to train a recurrent_policy")
 
     # optimizer parameters

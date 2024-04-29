@@ -3,15 +3,13 @@ from pygame.locals import *
 import sys
 import numpy as np
 import pickle
-sys.path.append('/Users/haomingyang/Documents/GitHub/indoor_final/prepare_data')
+sys.path.append('./prepare_data')
 from prepare_for_rendering import take_away_dict_postprocess
-#from myEnv.util.config_3d import Config
 import scipy.spatial as spt
 import paramiko
 import os
 import cv2 as cv
 
-# print(cv.imread('./F4_POI_on_grid_test.png').shape)
 WIDTH = 1035
 HEIGHT = 900
 

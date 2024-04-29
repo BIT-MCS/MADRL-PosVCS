@@ -170,7 +170,6 @@ def determine_vime_reward(data):
 
 def determine_vime_reward_batch(data):
     uav_idx, bnn_model, current_obs, next_obs = data
-    print(current_obs.shape)
     KL_preprocess(bnn_model, current_obs, next_obs)
     KL = speedy_fisher(get_all_thetas(bnn_model))
     trajectory_median = [[] for _ in range(current_obs.shape[0])]
