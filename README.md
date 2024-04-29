@@ -27,18 +27,13 @@ Train our solution
 ```bash
 python ./MAPPO/train/train.py
 ```
+
 ## :checkered_flag: Testing
 
 Test with the trained models 
 
 ```sh
-python experiments/test.py --load-dir=your_model_path
-```
-
-Random test the env
-
-```sh
-python experiments/test_random.py
+python ./MAPPO/train/train.py --load-dir your_model_path --generate_outputs True
 ```
 
 ## :clap: code_Reference
