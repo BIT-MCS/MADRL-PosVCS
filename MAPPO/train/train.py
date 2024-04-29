@@ -1,8 +1,9 @@
 import sys
 import os
-#os.environ['KMP_DUPLICATE_LIB_OK']='True'
-os.chdir('/Users/haomingyang/Documents/GitHub/INDOOR/indoor_final')
-sys.path.append(os.getcwd() + '/MAPPO')
+cwd = os.getcwd()
+sys.path.append(os.path.join(cwd, 'MAPPO'))
+sys.path.append(os.path.join(cwd, 'prepare_data'))
+sys.path.append(os.path.join(cwd, 'MI_intrinsic'))
 import socket
 import setproctitle
 import numpy as np

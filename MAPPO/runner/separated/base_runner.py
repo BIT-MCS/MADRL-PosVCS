@@ -1,4 +1,3 @@
-    
 import time
 import wandb
 import os
@@ -22,7 +21,7 @@ class Runner(object):
         self.device = config['device']
         self.num_agents = config['num_agents']
 
-        # parameters
+        
         self.env_name = self.all_args.env_name
         self.algorithm_name = self.all_args.algorithm_name
         self.experiment_name = self.all_args.experiment_name
@@ -38,13 +37,13 @@ class Runner(object):
         self.use_render = self.all_args.use_render
         self.recurrent_N = self.all_args.recurrent_N
 
-        # interval
+        
         self.save_interval = self.all_args.save_interval
         self.use_eval = self.all_args.use_eval
         self.eval_interval = self.all_args.eval_interval
         self.log_interval = self.all_args.log_interval
 
-        # dir
+        
         self.model_dir = self.all_args.model_dir
 
         if self.use_render:
@@ -74,7 +73,7 @@ class Runner(object):
         self.policy = []
         for agent_id in range(self.num_agents):
             share_observation_space = self.envs.share_observation_space[agent_id] if self.use_centralized_V else self.envs.observation_space[agent_id]
-            # policy network
+            
             po = Policy(self.all_args,
                         self.envs.observation_space[agent_id],
                         share_observation_space,
@@ -83,16 +82,16 @@ class Runner(object):
             self.policy.append(po)
 
         if self.model_dir is not None:
-            #TODO：6.1 这里还需要额外load下VIME模型，方便续杯
+            
             self.restore()
             
 
         self.trainer = []
         self.buffer = []
         for agent_id in range(self.num_agents):
-            # algorithm
+            
             tr = TrainAlgo(self.all_args, self.policy[agent_id], device = self.device)
-            # buffer
+            
             share_observation_space = self.envs.share_observation_space[agent_id] if self.use_centralized_V else self.envs.observation_space[agent_id]
             bu = SeparatedReplayBuffer(self.all_args,
                                        self.envs.observation_space[agent_id],

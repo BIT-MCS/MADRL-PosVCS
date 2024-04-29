@@ -8,12 +8,10 @@ import cv2 as cv
 from PIL import Image
 from copy import deepcopy
 import sys
-
-
-sys.path.append(os.getcwd())
-sys.path.append(os.getcwd() + '/MAPPO')
-sys.path.append(os.getcwd() + '/prepare_data')
-sys.path.append(os.getcwd() + '/MI_intrinsic')
+cwd = os.getcwd()
+sys.path.append(os.path.join(cwd, 'MAPPO'))
+sys.path.append(os.path.join(cwd, 'prepare_data'))
+sys.path.append(os.path.join(cwd, 'MI_intrinsic'))
 from obstacle import _choose_color
 from compute_f import split_ts_seq, compute_step_positions
 from io_f import read_data_file

@@ -35,6 +35,10 @@ Test with the trained models
 ```sh
 python ./MAPPO/train/train.py --load-dir your_model_path --generate_outputs True
 ```
+You can also view your trained trajectories through the command below, followed by the previous command.
+```sh
+python ./MAPPO/env_render.py
+```
 
 ## :clap: code_Reference
 - https://github.com/tinyzqh/light_mappo
