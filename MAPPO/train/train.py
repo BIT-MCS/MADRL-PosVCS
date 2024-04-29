@@ -1,13 +1,6 @@
-"""
-# @Time    : 2021/6/30 10:07 下午
-# @Author  : hezhiqiang
-# @Email   : tinyzqh@163.com
-# @File    : train.py
-"""
-
-# !/usr/bin/env python
 import sys
 import os
+#os.environ['KMP_DUPLICATE_LIB_OK']='True'
 os.chdir('/Users/haomingyang/Documents/GitHub/INDOOR/indoor_final')
 sys.path.append(os.getcwd() + '/MAPPO')
 import socket
@@ -19,7 +12,7 @@ from config import get_config
 from envs.env_wrappers import DummyVecEnv
 from envs.env_wrappers_new import SubprocVecEnv
 
-# TODO:记得改这里
+
 sys.path.append(os.getcwd())
 from MAPPO.env_config.F2_3_floors import config  
 
@@ -29,36 +22,33 @@ from MAPPO.env_config.F2_3_floors import config
 def make_train_env(all_args):
     def get_env_fn(rank):
         def init_env():
-            # TODO 注意注意，这里选择连续还是离散可以选择注释上面两行，或者下面两行。
-            # from envs.env_continuous import ContinuousActionEnv
-            # env = ContinuousActionEnv()
             from envs.env_discrete import DiscreteActionEnv
             env = DiscreteActionEnv()
             env.seed(all_args.seed + rank * 1000)
             return env
         return init_env
-    #return DummyVecEnv([get_env_fn(i) for i in range(all_args.n_rollout_threads)])
+    
     return SubprocVecEnv([get_env_fn(i) for i in range(all_args.n_rollout_threads)])
 
 def make_eval_env(all_args):
     def get_env_fn(rank):
         def init_env():
-            # TODO 注意注意，这里选择连续还是离散可以选择注释上面两行，或者下面两行。
-            # from envs.env_continuous import ContinuousActionEnv
-            # env = ContinuousActionEnv()
+            
+            
+            
             from envs.env_discrete import DiscreteActionEnv
             env = DiscreteActionEnv()
             env.seed(all_args.seed + rank * 1000)
             return env
         return init_env
-    #return DummyVecEnv([get_env_fn(i) for i in range(all_args.n_rollout_threads)])
+    
     return SubprocVecEnv([get_env_fn(i) for i in range(all_args.n_rollout_threads)])
 
 
 def parse_args(args, parser):
     parser.add_argument('--scenario_name', type=str, default='MyEnv', help="Which scenario to run on")
     parser.add_argument("--num_landmarks", type=int, default=3)
-    parser.add_argument('--num_agents', type=int, default=config['agent_num'], help="number of players") # 注意同步改一下
+    parser.add_argument('--num_agents', type=int, default=config['agent_num'], help="number of players") 
 
     all_args = parser.parse_known_args(args)[0]
 
@@ -69,7 +59,7 @@ def main(args):
     parser = get_config()
     all_args = parse_args(args, parser)
 
-    # render的时候就用一个环境
+    
     if all_args.generate_outputs:
         all_args.n_rollout_threads = 1
 
@@ -84,11 +74,11 @@ def main(args):
     assert (all_args.share_policy == True and all_args.scenario_name == 'simple_speaker_listener') == False, (
         "The simple_speaker_listener scenario can not use shared policy. Please check the config.py.")
 
-    # cuda
+    
     if all_args.cuda and torch.cuda.is_available():
         print("choose to use gpu...")
         device = torch.device("cuda:0")
-        #torch.set_num_threads(all_args.n_training_threads)
+        
         if all_args.cuda_deterministic:
             torch.backends.cudnn.benchmark = False
             torch.backends.cudnn.deterministic = True
@@ -97,7 +87,7 @@ def main(args):
         device = torch.device("cpu")
         torch.set_num_threads(all_args.n_training_threads)
 
-    # run dir
+    
     run_dir = Path(os.path.split(os.path.dirname(os.path.abspath(__file__)))[
                        0] + "/results") / all_args.env_name / all_args.scenario_name / all_args.algorithm_name / all_args.experiment_name
     if not run_dir.exists():
@@ -120,18 +110,18 @@ def main(args):
                               str(all_args.env_name) + "-" + str(all_args.experiment_name) + "@" + str(
         all_args.user_name))
 
-    # seed
+    
     torch.manual_seed(all_args.seed)
     torch.cuda.manual_seed_all(all_args.seed)
     np.random.seed(all_args.seed)
 
-    # 这里需要加一几个其他的，一个是load模型继续训练，一个是load模型然后生成轨迹
-    # env init
+    
+    
     envs = make_train_env(all_args)
     eval_envs = make_eval_env(all_args) if all_args.use_eval else None
     num_agents = all_args.num_agents
 
-    #data = envs.call_env_function('test','djaskldjasl',0)
+    
     config = {
         "all_args": all_args,
         "envs": envs,
@@ -141,7 +131,7 @@ def main(args):
         "run_dir": run_dir
     }
 
-    # run experiments
+    
     if all_args.share_policy:
         from runner.shared.env_runner import EnvRunner as Runner
     else:
@@ -150,7 +140,7 @@ def main(args):
     runner = Runner(config)
     runner.run(device)
 
-    # post process
+    
     envs.close()
     if all_args.use_eval and eval_envs is not envs:
         eval_envs.close()

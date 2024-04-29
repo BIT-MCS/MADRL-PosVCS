@@ -1,10 +1,3 @@
-"""
-# @Time    : 2021/7/2 5:22 下午
-# @Author  : hezhiqiang
-# @Email   : tinyzqh@163.com
-# @File    : env_discrete.py
-"""
-
 import gym
 from gym import spaces
 import numpy as np
@@ -12,7 +5,6 @@ from envs.env_core import EnvCore
 
 
 class DiscreteActionEnv(object):
-    """对于离散动作环境的封装"""
     def __init__(self):
         self.env = EnvCore()
         self.num_agent = self.env.agent_num
@@ -20,12 +12,12 @@ class DiscreteActionEnv(object):
         self.signal_obs_dim = self.env.obs_dim
         self.signal_action_dim = self.env.action_dim
 
-        # if true, action is a number 0...N, otherwise action is a one-hot N-dimensional vector
+        
         self.discrete_action_input = False
 
         self.movable = True
 
-        # configure spaces
+        
         self.action_space = []
         self.observation_space = []
         self.share_observation_space = []
@@ -33,42 +25,23 @@ class DiscreteActionEnv(object):
         share_obs_dim = 0
         total_action_space = []
         for agent in range(self.num_agent):
-            # physical action space
-            u_action_space = spaces.Discrete(self.signal_action_dim)  # 5个离散的动作
+            
+            u_action_space = spaces.Discrete(self.signal_action_dim) 
 
             if self.movable:
                 total_action_space.append(u_action_space)
 
-            # 这里有些代码逻辑问题，直接框掉好了
-            
-            # # total action space
-            # if len(total_action_space) > 1:
-            #     # all action spaces are discrete, so simplify to MultiDiscrete action space
-            #     if all([isinstance(act_space, spaces.Discrete) for act_space in total_action_space]):
-            #         act_space = MultiDiscrete([[0, act_space.n - 1] for act_space in total_action_space])
-            #     else:
-            #         act_space = spaces.Tuple(total_action_space)
-            #     self.action_space.append(act_space)
-            # else:
-            #     self.action_space.append(total_action_space[0])
-
             self.action_space.append(total_action_space[0])
 
-            # observation space
+            
             share_obs_dim += self.signal_obs_dim
             self.observation_space.append(spaces.Box(low=-np.inf, high=+np.inf, shape=(self.signal_obs_dim,),
-                                                     dtype=np.float32))  # [-inf,inf]
+                                                     dtype=np.float32))  
 
         self.share_observation_space = [spaces.Box(low=-np.inf, high=+np.inf, shape=(share_obs_dim,),
                                                    dtype=np.float32) for _ in range(self.num_agent)]
 
     def step(self, actions, rend = False):
-        """
-        输入actions纬度假设：
-        # actions shape = (5, 2, 5)
-        # 5个线程的环境，里面有2个智能体，每个智能体的动作是一个one_hot的5维编码
-        """
-
         results = self.env.step(actions, rend)
         obs, rews, dones, infos = results
         return np.stack(obs), np.stack(rews), np.stack(dones), infos
@@ -125,7 +98,7 @@ class MultiDiscrete():
 
     def sample(self):
         """ Returns a array with one sample from each discrete action space """
-        # For each row: round(random .* (max - min) + min, 0)
+        
         random_array = np.random.rand(self.num_discrete_space)
         return [int(x) for x in np.floor(np.multiply((self.high - self.low + 1.), random_array) + self.low)]
 

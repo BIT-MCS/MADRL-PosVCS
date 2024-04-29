@@ -151,7 +151,6 @@ class ShareVecEnv(ABC):
         self.close_extras()
         self.closed = True
         
-# single env
 class DummyVecEnv():
     def __init__(self, env_fns):
         self.envs = [fn() for fn in env_fns]
@@ -201,21 +200,17 @@ class SubprocVecEnv(ShareVecEnv):
     def __init__(self, env_fns, spaces=None):
         """
         envs: list of gym environments to run in subprocesses
-        """
-
-        ######################
-        #这个文件的更改用于通信
-        ######################
+        """        
         self.waiting = False
         self.closed = False
         self.nenvs = len(env_fns)
         self.envs = env_fns
-        self.env_ref = env_fns[0]() # 这个只是方便读取config用的
+        self.env_ref = env_fns[0]() 
         self.remotes, self.work_remotes = zip(*[Pipe() for _ in range(self.nenvs)])
         self.ps = [Process(target=worker, args=(work_remote, remote, CloudpickleWrapper(env_fn)))
                    for (work_remote, remote, env_fn) in zip(self.work_remotes, self.remotes, env_fns)]
         for p in self.ps:
-            p.daemon = True  # if the main process crashes, we should not cause things to hang
+            p.daemon = True  
             p.start()
         for remote in self.work_remotes:
             remote.close()

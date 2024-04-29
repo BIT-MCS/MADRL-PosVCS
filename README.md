@@ -15,17 +15,17 @@ In this paper, we formulate the multi-floor indoor fingerprint collection task w
     ```
 2. Install dependent packages
     ```sh
-    conda create -n PosVC python==3.9
+    conda create --name PosVC python==3.9
     conda activate PosVC
+    python -m pip install torch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 -f https://download.pytorch.org/whl/torch_stable.html
     pip install -r requirements.txt
     ```
 
-For a simple 
 ## :computer: Training
 
 Train our solution
 ```bash
-python experiments/train.py
+python ./MAPPO/train/train.py
 ```
 ## :checkered_flag: Testing
 

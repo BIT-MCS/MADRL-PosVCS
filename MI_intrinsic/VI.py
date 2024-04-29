@@ -9,6 +9,7 @@ from torchsummary import summary
 from statistics import median
 from torchhk import transform_model
 
+
 def get_all_thetas(model):
     ret = []
     for layers in model:
