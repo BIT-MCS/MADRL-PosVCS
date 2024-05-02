@@ -1,0 +1,153 @@
+Model structure:  R_Actor(
+  (base): MLPBase(
+    (feature_norm): LayerNorm((510,), eps=1e-05, elementwise_affine=True)
+    (mlp): MLPLayer(
+      (fc1): Sequential(
+        (0): Linear(in_features=510, out_features=64, bias=True)
+        (1): ReLU()
+        (2): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+      )
+      (fc_h): Sequential(
+        (0): Linear(in_features=64, out_features=64, bias=True)
+        (1): ReLU()
+        (2): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+      )
+      (fc2): ModuleList(
+        (0): Sequential(
+          (0): Linear(in_features=64, out_features=64, bias=True)
+          (1): ReLU()
+          (2): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+        )
+      )
+    )
+  )
+  (rnn): RNNLayer(
+    (rnn): GRU(64, 64)
+    (norm): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+  )
+  (act): ACTLayer(
+    (action_out): Categorical(
+      (linear): Linear(in_features=64, out_features=29, bias=True)
+    )
+  )
+) 
+
+
+Layer: base.feature_norm.weight | Size: torch.Size([510]) 
+
+Layer: base.feature_norm.bias | Size: torch.Size([510]) 
+
+Layer: base.mlp.fc1.0.weight | Size: torch.Size([64, 510]) 
+
+Layer: base.mlp.fc1.0.bias | Size: torch.Size([64]) 
+
+Layer: base.mlp.fc1.2.weight | Size: torch.Size([64]) 
+
+Layer: base.mlp.fc1.2.bias | Size: torch.Size([64]) 
+
+Layer: base.mlp.fc_h.0.weight | Size: torch.Size([64, 64]) 
+
+Layer: base.mlp.fc_h.0.bias | Size: torch.Size([64]) 
+
+Layer: base.mlp.fc_h.2.weight | Size: torch.Size([64]) 
+
+Layer: base.mlp.fc_h.2.bias | Size: torch.Size([64]) 
+
+Layer: base.mlp.fc2.0.0.weight | Size: torch.Size([64, 64]) 
+
+Layer: base.mlp.fc2.0.0.bias | Size: torch.Size([64]) 
+
+Layer: base.mlp.fc2.0.2.weight | Size: torch.Size([64]) 
+
+Layer: base.mlp.fc2.0.2.bias | Size: torch.Size([64]) 
+
+Layer: rnn.rnn.weight_ih_l0 | Size: torch.Size([192, 64]) 
+
+Layer: rnn.rnn.weight_hh_l0 | Size: torch.Size([192, 64]) 
+
+Layer: rnn.rnn.bias_ih_l0 | Size: torch.Size([192]) 
+
+Layer: rnn.rnn.bias_hh_l0 | Size: torch.Size([192]) 
+
+Layer: rnn.norm.weight | Size: torch.Size([64]) 
+
+Layer: rnn.norm.bias | Size: torch.Size([64]) 
+
+Layer: act.action_out.linear.weight | Size: torch.Size([29, 64]) 
+
+Layer: act.action_out.linear.bias | Size: torch.Size([29]) 
+
+Model structure:  R_Critic(
+  (base): MLPBase(
+    (feature_norm): LayerNorm((510,), eps=1e-05, elementwise_affine=True)
+    (mlp): MLPLayer(
+      (fc1): Sequential(
+        (0): Linear(in_features=510, out_features=64, bias=True)
+        (1): ReLU()
+        (2): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+      )
+      (fc_h): Sequential(
+        (0): Linear(in_features=64, out_features=64, bias=True)
+        (1): ReLU()
+        (2): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+      )
+      (fc2): ModuleList(
+        (0): Sequential(
+          (0): Linear(in_features=64, out_features=64, bias=True)
+          (1): ReLU()
+          (2): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+        )
+      )
+    )
+  )
+  (rnn): RNNLayer(
+    (rnn): GRU(64, 64)
+    (norm): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+  )
+  (v_out): Linear(in_features=64, out_features=1, bias=True)
+) 
+
+
+Layer: base.feature_norm.weight | Size: torch.Size([510]) 
+
+Layer: base.feature_norm.bias | Size: torch.Size([510]) 
+
+Layer: base.mlp.fc1.0.weight | Size: torch.Size([64, 510]) 
+
+Layer: base.mlp.fc1.0.bias | Size: torch.Size([64]) 
+
+Layer: base.mlp.fc1.2.weight | Size: torch.Size([64]) 
+
+Layer: base.mlp.fc1.2.bias | Size: torch.Size([64]) 
+
+Layer: base.mlp.fc_h.0.weight | Size: torch.Size([64, 64]) 
+
+Layer: base.mlp.fc_h.0.bias | Size: torch.Size([64]) 
+
+Layer: base.mlp.fc_h.2.weight | Size: torch.Size([64]) 
+
+Layer: base.mlp.fc_h.2.bias | Size: torch.Size([64]) 
+
+Layer: base.mlp.fc2.0.0.weight | Size: torch.Size([64, 64]) 
+
+Layer: base.mlp.fc2.0.0.bias | Size: torch.Size([64]) 
+
+Layer: base.mlp.fc2.0.2.weight | Size: torch.Size([64]) 
+
+Layer: base.mlp.fc2.0.2.bias | Size: torch.Size([64]) 
+
+Layer: rnn.rnn.weight_ih_l0 | Size: torch.Size([192, 64]) 
+
+Layer: rnn.rnn.weight_hh_l0 | Size: torch.Size([192, 64]) 
+
+Layer: rnn.rnn.bias_ih_l0 | Size: torch.Size([192]) 
+
+Layer: rnn.rnn.bias_hh_l0 | Size: torch.Size([192]) 
+
+Layer: rnn.norm.weight | Size: torch.Size([64]) 
+
+Layer: rnn.norm.bias | Size: torch.Size([64]) 
+
+Layer: v_out.weight | Size: torch.Size([1, 64]) 
+
+Layer: v_out.bias | Size: torch.Size([1]) 
