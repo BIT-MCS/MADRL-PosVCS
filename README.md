@@ -1,4 +1,4 @@
-# MADRL-PosVC
+# MADRL-PosVCS
 
 ## :page_facing_up: Description
 Indoor localization is drawing more and more attentions due to the growing demand of various location-based services, where fingerprinting is a popular data driven techniques that does not rely on complex measurement equipment, yet it requires site surveys which is both labor-intensive and time-consuming.
