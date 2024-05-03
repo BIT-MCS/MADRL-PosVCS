@@ -16,11 +16,11 @@ def site2_F4(heat_positions):
     # 处理后图像大小：（1035,900,3）
     # 路网图片大小：（742, 800,3）
     try :
-        floor_info_filename = './prepare_data/data/site2/F4/floor_info.json' # 这里可能要随着调整下
+        floor_info_filename = './prepare_data/data/F4/floor_info.json' # 这里可能要随着调整下
         with open(floor_info_filename) as f:
             floor_info = json.load(f)
     except Exception as e:
-        floor_info_filename = './data/site2/F4/floor_info.json' # 这里可能要随着调整下
+        floor_info_filename = './data/F4/floor_info.json' # 这里可能要随着调整下
         with open(floor_info_filename) as f:
             floor_info = json.load(f)
     width_meter = floor_info["map_info"]["width"] # 从floor info中抠出来了

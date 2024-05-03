@@ -6,7 +6,7 @@ import numpy as np
 from PIL import Image
 from visualize_f import save_figure_to_png
 import site2_handcraft as handcraft
-from MAPPO.env_config.default_config import config
+from MAPPO.env_config.F2_3_floors import config
 
 
 def _black_white(in_dir, out_dir):

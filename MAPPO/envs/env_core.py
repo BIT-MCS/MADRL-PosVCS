@@ -983,9 +983,9 @@ class EnvCore(object):
     
     def _aoilambda(self,dummy):
   
-        print(self.aoi_lambda[0][('site2', 'F2')][(580, 230)])
-        print(self.aoi_lambda[0][('site2', 'F3')][(580, 230)])
-        print(self.aoi_lambda[0][('site2', 'F4')][(580, 230)])
+        # print(self.aoi_lambda[0][('site2', 'F2')][(580, 230)])
+        # print(self.aoi_lambda[0][('site2', 'F3')][(580, 230)])
+        # print(self.aoi_lambda[0][('site2', 'F4')][(580, 230)])
         return self.aoi_lambda
     
     def _init_lambda_aoi(self):

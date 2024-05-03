@@ -15,7 +15,7 @@ from visualize_f import visualize_trajectory, visualize_heatmap, visualize_posit
 from obstacle import *
 from obstacle import _visualize_poi_on_map, _gridline_matching
 from data_process import *
-from MAPPO.env_config.default_config import config
+from MAPPO.env_config.F2_3_floors import config
 
 FL = 'F2'
 site = 'site3'

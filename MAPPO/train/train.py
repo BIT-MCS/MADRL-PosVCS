@@ -10,7 +10,6 @@ import numpy as np
 from pathlib import Path
 import torch
 from config import get_config
-from envs.env_wrappers import DummyVecEnv
 from envs.env_wrappers_new import SubprocVecEnv
 
 
@@ -34,9 +33,6 @@ def make_train_env(all_args):
 def make_eval_env(all_args):
     def get_env_fn(rank):
         def init_env():
-            
-            
-            
             from envs.env_discrete import DiscreteActionEnv
             env = DiscreteActionEnv()
             env.seed(all_args.seed + rank * 1000)

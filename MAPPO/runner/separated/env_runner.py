@@ -1,5 +1,4 @@
 import time
-import wandb
 import os
 import numpy as np
 from itertools import chain
@@ -41,10 +40,10 @@ class EnvRunner(Runner):
             time_interval = self.envs.env_ref.env.config['data_changes_num']
         
         
-        transition_prob_model = VI.build_network(32,32,device)
+        transition_prob_model = VI.build_network(31,31,device)
         
         
-        vime_pool = VI.SimpleReplayPool(2000,(32,),self.envs.env_ref.env.config['total_action_dim'])
+        vime_pool = VI.SimpleReplayPool(2000,(31,),self.envs.env_ref.env.config['total_action_dim'])
         
         for episode in range(episodes):
             if self.use_linear_lr_decay:

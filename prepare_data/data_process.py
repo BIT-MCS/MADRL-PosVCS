@@ -101,7 +101,7 @@ def all_positions(directory, outfile_name):
 
 
 def grid_data_extract(Site, FL, grids):
-    data = process_sequence(f'./prepare_data/data/{Site}/{FL}/path_data_files/')
+    data = process_sequence(f'./prepare_data/data/{FL}/path_data_files/')
     pos = [d[6] for d in data] 
     fc = getattr(handcraft, f'{Site}_{FL}')
     pos_mapped = fc(pos) 

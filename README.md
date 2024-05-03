@@ -10,13 +10,13 @@ In this paper, we formulate the multi-floor indoor fingerprint collection task w
 ## :wrench: Installation
 1. Clone repo
     ```bash
-    git clone https://github.com/BIT-MCS/MADRL-PosVC
-    cd MADRL-PosVC
+    git clone https://github.com/BIT-MCS/MADRL-PosVCS
+    cd MADRL-PosVCS
     ```
 2. Install dependent packages
     ```sh
-    conda create --name PosVC python==3.9
-    conda activate PosVC
+    conda create --name PosVCS python==3.9
+    conda activate PosVCS
     python -m pip install torch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 -f https://download.pytorch.org/whl/torch_stable.html
     pip install -r requirements.txt
     ```
