@@ -94,7 +94,7 @@ def speedy_fisher(all_layers):
     approximate = torch.tensor(0.0, device=all_layers[0].weight_mu.device)
 
     l = torch.tensor(0.001, device=all_layers[0].weight_mu.device)
-    factor = 1/2 * l * l
+    factor = 1/2 * l * l * 1/1550 * 1/2500 * 1/1550 * 1/8 # hardcode the # of weights in BNN
 
     for layers in all_layers:
         grad_w_mu = torch.flatten(layers.weight_mu.grad)
@@ -146,8 +146,8 @@ def compute(model,buffer,train_size = 10):
         for _ in range(train_size):
             pre = model(torch.from_numpy(samples['observations']).float())
             ce = mse_loss(pre, torch.from_numpy(samples['next_observations']).float())
-            lastce = ce
             kl = kl_loss(model)
+            lastce = kl
             cost = ce + kl_weight*kl
             optimizer.zero_grad()
             cost.backward()

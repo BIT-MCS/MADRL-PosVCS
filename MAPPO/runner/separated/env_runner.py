@@ -40,10 +40,10 @@ class EnvRunner(Runner):
             time_interval = self.envs.env_ref.env.config['data_changes_num']
         
         
-        transition_prob_model = VI.build_network(31,31,device)
+        transition_prob_model = VI.build_network(31,31,device) # hardcode length 28 + 3
         
         
-        vime_pool = VI.SimpleReplayPool(2000,(31,),self.envs.env_ref.env.config['total_action_dim'])
+        vime_pool = VI.SimpleReplayPool(1000,(31,),self.envs.env_ref.env.config['total_action_dim'])
         
         for episode in range(episodes):
             if self.use_linear_lr_decay:
@@ -119,10 +119,10 @@ class EnvRunner(Runner):
                             for fl in floor_list:
                                 for pos in poi_pos[fl]:
                                     append_reward = 5 * 1/self.envs.env_ref.env.config['data_last_time'] \
-                                        * lambdalist[interval][fl][pos] * track_visit[num_envs][interval][agent][fl][pos]
+                                        * lambdalist[interval][fl][pos] * track_visit[num_envs][interval][agent][fl][pos]  # scale 5
                                     period_reward[interval][step,num_envs,0] += append_reward
                                     count_adding += append_reward
-                    print('This env add total rewards: ', count_adding)
+                    print('Total Dual Rewards for All Agents: ', count_adding)
 
                 for agents in range(rewards.shape[1]):
                     for i in range(len(d_list)):                      
@@ -162,12 +162,12 @@ class EnvRunner(Runner):
                             for agents in range(rewards.shape[1]):       
                                 vime_reward, trajectory_median = VI.determine_vime_reward(
                                     (agents, transition_prob_model, torch.from_numpy(new_obslist[num_envs,agents]), \
-                                        torch.from_numpy(new_obslist[num_envs,agents]), trajectory_median))    
-                                modified_rewards[agents,i,num_envs,0] +=  vime_reward 
-            
+                                        torch.from_numpy(new_obslist[num_envs,agents]), trajectory_median))   
+                                modified_rewards[agents,i,num_envs,0] +=  vime_reward * 0.2 # VI scale
+
             self.update_rewards(modified_rewards)
             md = VI.convert_to_mean_nn(transition_prob_model)
-            #print(torch.round(md(torch.tensor(self.envs._vime_obs_process(obs_list[0][0,0,:],action_list[0][0,0,:],index = 0)).float())))
+            print(torch.round(md(torch.tensor(self.envs._vime_obs_process(obs_list[0][0,0,:],action_list[0][0,0,:],index = 0)).float())))
             
             train_infos = self.train()
 

@@ -1,6 +1,5 @@
 import cv2 as cv
 import sys
-sys.path.append('/Users/haomingyang/Documents/GitHub/INDOOR/indoor_final')
 import os
 import numpy as np
 from PIL import Image

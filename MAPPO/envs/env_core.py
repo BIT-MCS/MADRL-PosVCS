@@ -21,7 +21,7 @@ from obstacle import _visualize_poi_on_map
 from data_process import dict_of_grid_data, data_prediction,load_GP, post_process_and_save_GP,connect_all_parts,connected_component
 from MAPPO.env_config import F2_3_floors 
 import site2_handcraft as handcraft
-import cvxpy as cp
+# import cvxpy as cp
 from skimage.draw import line
 import VI
 from statistics import median
