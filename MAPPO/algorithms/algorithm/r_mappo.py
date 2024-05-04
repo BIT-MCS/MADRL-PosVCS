@@ -149,7 +149,7 @@ class RMAPPO():
 
         if update_actor:
             (policy_loss - dist_entropy * self.entropy_coef).backward()
-
+        
         if self._use_max_grad_norm:
             actor_grad_norm = nn.utils.clip_grad_norm_(self.policy.actor.parameters(), self.max_grad_norm)
         else:
@@ -207,11 +207,9 @@ class RMAPPO():
                 data_generator = buffer.naive_recurrent_generator(advantages, self.num_mini_batch)
             else:
                 data_generator = buffer.feed_forward_generator(advantages, self.num_mini_batch)
-
             for sample in data_generator:
                 value_loss, critic_grad_norm, policy_loss, dist_entropy, actor_grad_norm, imp_weights \
                     = self.ppo_update(sample, update_actor)
-
                 train_info['value_loss'] += value_loss.item()
                 train_info['policy_loss'] += policy_loss.item()
                 train_info['dist_entropy'] += dist_entropy.item()

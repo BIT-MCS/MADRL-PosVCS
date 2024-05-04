@@ -133,7 +133,7 @@ def build_network(in_dim,out_dim,device):
 
     return model.to(device=device)
 
-def compute(model,buffer,train_size = 10):
+def compute(model,buffer,train_size = 10, device = 'cpu'):
     mse_loss = nn.MSELoss()
     kl_loss = bnn.BKLLoss(reduction='mean', last_layer_only=False)
     optimizer = optim.Adam(model.parameters(), lr=0.01)
@@ -144,8 +144,8 @@ def compute(model,buffer,train_size = 10):
     for _ in range(batches_num):
         samples = buffer.random_batch(400)
         for _ in range(train_size):
-            pre = model(torch.from_numpy(samples['observations']).float())
-            ce = mse_loss(pre, torch.from_numpy(samples['next_observations']).float())
+            pre = model(torch.from_numpy(samples['observations']).float().to(device=device))
+            ce = mse_loss(pre, torch.from_numpy(samples['next_observations']).float().to(device=device))
             kl = kl_loss(model)
             lastce = kl
             cost = ce + kl_weight*kl
@@ -154,8 +154,11 @@ def compute(model,buffer,train_size = 10):
             optimizer.step()
     print('LAST MODEL_CE\n', lastce)
 
-def determine_vime_reward(data):
+def determine_vime_reward(data,device):
     uav_idx, bnn_model, current_obs, next_obs, trajectory_median = data
+    bnn_model = bnn_model.to(device=device)
+    current_obs = current_obs.to(device=device)
+    next_obs = next_obs.to(device=device)
     KL_preprocess(bnn_model, current_obs, next_obs)
     KL = speedy_fisher(get_all_thetas(bnn_model))
     if len(trajectory_median[uav_idx]) == 0:

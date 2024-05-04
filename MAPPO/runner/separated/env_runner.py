@@ -162,18 +162,18 @@ class EnvRunner(Runner):
                             for agents in range(rewards.shape[1]):       
                                 vime_reward, trajectory_median = VI.determine_vime_reward(
                                     (agents, transition_prob_model, torch.from_numpy(new_obslist[num_envs,agents]), \
-                                        torch.from_numpy(new_obslist[num_envs,agents]), trajectory_median))   
+                                        torch.from_numpy(new_obslist[num_envs,agents]), trajectory_median),self.device)   
                                 modified_rewards[agents,i,num_envs,0] +=  vime_reward * 0.2 # VI scale
 
             self.update_rewards(modified_rewards)
             md = VI.convert_to_mean_nn(transition_prob_model)
-            print(torch.round(md(torch.tensor(self.envs._vime_obs_process(obs_list[0][0,0,:],action_list[0][0,0,:],index = 0)).float())))
+            # print(torch.round(md(torch.tensor(self.envs._vime_obs_process(obs_list[0][0,0,:],action_list[0][0,0,:],index = 0)).float())))
             
             train_infos = self.train()
-
+            # print ("train_infos: ", train_infos)
             
             if self.envs.env_ref.env.config['use_vime']:
-                VI.compute(transition_prob_model, vime_pool)
+                VI.compute(transition_prob_model, vime_pool, device = self.device)
 
             
             total_num_steps = (episode + 1) * self.episode_length * self.n_rollout_threads
