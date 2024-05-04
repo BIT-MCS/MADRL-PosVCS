@@ -20,7 +20,7 @@ In this paper, we formulate the multi-floor indoor fingerprint collection task w
     python -m pip install torch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 -f https://download.pytorch.org/whl/torch_stable.html
     pip install -r requirements.txt
     ```
-
+   You might need to adjust your Torch version according to your GPU and operating system, or you can opt to use the CPU instead.
 ## :computer: Training
 
 Train our solution
