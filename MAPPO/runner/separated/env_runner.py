@@ -49,14 +49,8 @@ class EnvRunner(Runner):
             if self.use_linear_lr_decay:
                 for agent_id in range(self.num_agents):
                     self.trainer[agent_id].policy.lr_decay(episode, episodes)
+            
 
-            previous_obs = self.envs.env_ref.env.initial_obs
-            trajectory_median = [[] for _ in range(self.envs.env_ref.env.config['agent_num'])]
-            
-            
-            d_list = []
-
-            
             track_visit = {en:{i:{uv:{fl:{pois:0 for pois in poi_pos[fl]} for fl in floor_list} for uv in range(agent_num)} \
                            for i in range(time_interval)} for en in range(self.envs.nenvs)}
             track_all = {en:{i:{fl:{pois:0 for pois in poi_pos[fl]} for fl in floor_list} for i in range(time_interval)}for en in range(self.envs.nenvs)}
@@ -72,8 +66,16 @@ class EnvRunner(Runner):
                 obs, rewards, dones, infos = self.envs.step(actions_env, rend)
                 obs_list.append(obs)
                 action_list.append(np.array(actions_env))
-
                 
+                if self.all_args.generate_outputs:
+                    ret_dict['observation'].append(obs[0])
+                    ret_dict['rewards'].append(rewards[0])
+                    ret_dict['dones'].append(dones[0])
+                    ret_dict['info'].append(infos[0]) 
+
+                data = obs, rewards, dones, infos, values, actions, action_log_probs, rnn_states, rnn_states_critic
+                self.insert(data)
+
                 if self.envs.env_ref.env.config['use_dual_descent'] and not rend:
                     period = int(step * self.envs.env_ref.env.config['data_changes_num'] /self.episode_length)
                     if self.envs.env_ref.env.config['use_dual_descent']:
@@ -85,47 +87,30 @@ class EnvRunner(Runner):
                                         track_visit[envs][period][uav][pos[0]][pos[1]] = 1
                                         track_all[envs][period][pos[0]][pos[1]] += 1
                 
-                
-                if self.all_args.generate_outputs:
-                    ret_dict['observation'].append(obs[0])
-                    ret_dict['rewards'].append(rewards[0])
-                    ret_dict['dones'].append(dones[0])
-                    ret_dict['info'].append(infos[0]) 
 
-                data = obs, rewards, dones, infos, values, actions, action_log_probs, rnn_states, rnn_states_critic
-                d_list.append(data)
-
-                
-                self.insert(data)
-
-            
-            modified_rewards = np.zeros([rewards.shape[1],len(d_list),self.envs.nenvs,1]) 
-            for agents in range(rewards.shape[1]):
-                    for i in range(len(d_list)):                      
-                        for num_envs in range(rewards.shape[0]):      
-                            modified_rewards[agents,i,num_envs,0] = d_list[i][1][num_envs,agents,0]
+            modified_rewards = np.zeros([rewards.shape[1],self.episode_length,self.envs.nenvs,1]) 
 
             if self.envs.env_ref.env.config['use_dual_descent'] and not rend:
                 period_reward = {}
                 for num_envs in range(self.envs.num_envs):
                     lambdalist = self.envs.aoilambda(index = num_envs)
                     count_adding = 0
-                    for step in range(len(d_list)):
+                    for step in range(self.episode_length):
                         interval = int(step * self.envs.env_ref.env.config['data_changes_num'] /self.episode_length)
                         if interval not in period_reward.keys():
                             
-                            period_reward[interval] = np.zeros([len(d_list),self.envs.num_envs,1])
+                            period_reward[interval] = np.zeros([self.episode_length,self.envs.num_envs,1])
                         for agent in range(agent_num):
                             for fl in floor_list:
                                 for pos in poi_pos[fl]:
-                                    append_reward = 5 * 1/self.envs.env_ref.env.config['data_last_time'] \
+                                    append_reward = 1 * 1/self.envs.env_ref.env.config['data_last_time'] \
                                         * lambdalist[interval][fl][pos] * track_visit[num_envs][interval][agent][fl][pos]  # scale 5
                                     period_reward[interval][step,num_envs,0] += append_reward
                                     count_adding += append_reward
                     print('Total Dual Rewards for All Agents: ', count_adding)
 
                 for agents in range(rewards.shape[1]):
-                    for i in range(len(d_list)):                      
+                    for i in range(self.episode_length):                      
                         for num_envs in range(rewards.shape[0]):      
                             modified_rewards[agents,i,num_envs,0] += period_reward[interval][i,num_envs,0]
                 
@@ -163,7 +148,7 @@ class EnvRunner(Runner):
                                 vime_reward, trajectory_median = VI.determine_vime_reward(
                                     (agents, transition_prob_model, torch.from_numpy(new_obslist[num_envs,agents]), \
                                         torch.from_numpy(new_obslist[num_envs,agents]), trajectory_median),self.device)   
-                                modified_rewards[agents,i,num_envs,0] +=  vime_reward * 0.2 # VI scale
+                                modified_rewards[agents,i,num_envs,0] +=  vime_reward * 0.05 # VI scale
 
             self.update_rewards(modified_rewards)
             md = VI.convert_to_mean_nn(transition_prob_model)
@@ -337,8 +322,8 @@ class EnvRunner(Runner):
                                          available_actions = masked[:, agent_id])
 
     def update_rewards(self, new_reward):
+        print(new_reward.shape,new_reward[0].shape)
         for agent_id in range(self.num_agents):
-            
             self.buffer[agent_id].update_rewards(new_reward[agent_id])
 
     @torch.no_grad()

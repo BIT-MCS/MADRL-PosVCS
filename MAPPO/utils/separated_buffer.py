@@ -60,11 +60,11 @@ class SeparatedReplayBuffer(object):
     
     # 在这里一次性更改奖励
     def update_rewards(self,new_rewards):
-        #print(new_rewards.shape, self.rewards.shape)
         assert(len(new_rewards) == len(self.rewards))
         assert new_rewards[0].shape == self.rewards[0].shape
-        print(sum(self.rewards),': prevous|new : ',sum(new_rewards))
-        self.rewards = new_rewards
+        # print(sum(self.rewards),': prevous|new : ',sum(new_rewards))
+        self.rewards = np.add(self.rewards,new_rewards)
+        # print(sum(self.rewards))
 
     def insert(self, share_obs, obs, rnn_states, rnn_states_critic, actions, action_log_probs,
                value_preds, rewards, masks, bad_masks=None, active_masks=None, available_actions=None):
