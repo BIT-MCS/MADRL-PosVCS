@@ -3,14 +3,13 @@ from pygame.locals import *
 import sys
 import numpy as np
 import pickle
-from prepare_for_rendering import take_away_dict_postprocess
-import scipy.spatial as spt
-import paramiko
 import os
 cwd = os.getcwd()
 sys.path.append(os.path.join(cwd, 'MAPPO'))
 sys.path.append(os.path.join(cwd, 'prepare_data'))
 sys.path.append(os.path.join(cwd, 'MI_intrinsic'))
+from prepare_for_rendering import take_away_dict_postprocess
+import scipy.spatial as spt
 import cv2 as cv
 
 WIDTH = 1035
@@ -382,35 +381,9 @@ def load_variavle(filename):
     return r
 
 
-if __name__ == '__main__':
-    path = '/home/liuchi/zqr/indoor_final/intermediate/data/generate_dict.pickle'
-    client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    client.connect("10.1.114.77", 22, "liuchi", "LIUCHI-linc-2021!", timeout=5)
-    sftp_client = client.open_sftp()
-    remote_file = sftp_client.open(path, 'r')
-    in_dict = pickle.load(remote_file)
-
-    # path = '/home/liuchi/wh/adeptRL/adept/env/env_bound/default_1.txt'
-    # #INDEX_CONVERT = get_convex_hull()
-    # client = paramiko.SSHClient()
-    # client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    # client.connect("10.1.114.77", 22, "liuchi", "LIUCHI-linc-2021!", timeout=5)
-    # sftp_client = client.open_sftp()
-    # remote_file = sftp_client.open(path, 'r')
-    # info = pickle.load(remote_file)
-    # pickle.dump(info, open('./whinfo.pickle','wb'))
-    # remote_file.close()
-    # print(info['y_poi_0_visit_tims'])
-    # path = '/Users/wanghao/wh/Code/Python/mcs_dynamically/manager_1653191380.txt'
-    # info = load_variavle(path)
-    # if 'manager' in path:
-    #     ALLOCATED = True
-    
-    # info = pickle.load(open('./whinfo.pickle','rb'))
-    
-    # with open('./intermediate/data/generate_dict.pickle', 'rb') as f:
-    #     in_dict = pickle.load(f)
+if __name__ == '__main__':    
+    with open('./intermediate/data/generate_dict.pickle', 'rb') as f:
+        in_dict = pickle.load(f)
         
     info = take_away_dict_postprocess(in_dict)
     R = RenderEnv(info)

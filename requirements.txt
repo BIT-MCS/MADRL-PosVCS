@@ -16,3 +16,4 @@ seaborn
 tensorboardX
 cvxpy
 wandb
+pygame

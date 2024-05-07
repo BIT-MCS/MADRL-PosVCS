@@ -931,7 +931,7 @@ class EnvCore(object):
         if self.config['rewarding_methods'] == 'default':
              
             default_penalty = -2
-            ratio = 0
+            ratio = 1
             ele_reward = 0
 
             if self.config['use_elevator']:
@@ -972,6 +972,8 @@ class EnvCore(object):
                         ele_reward = 0
 
                     self.elevator_usage_time[agent] = self.game_steps
+            if ele_reward != 0:
+                print('ele_reward', ele_reward)
                         
             return default_penalty + delta_data_amount + ele_reward * ratio
 

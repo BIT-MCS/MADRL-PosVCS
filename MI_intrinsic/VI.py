@@ -138,7 +138,7 @@ def compute(model,buffer,train_size = 10, device = 'cpu'):
     kl_loss = bnn.BKLLoss(reduction='mean', last_layer_only=False)
     optimizer = optim.Adam(model.parameters(), lr=0.01)
     kl_weight = 0.01
-    batches_num = 30
+    batches_num = 1
 
     lastce = 0
     for _ in range(batches_num):

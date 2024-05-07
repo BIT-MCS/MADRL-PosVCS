@@ -33,7 +33,7 @@ python ./MAPPO/train/train.py
 Test with the trained models 
 
 ```sh
-python ./MAPPO/train/train.py --load-dir your_model_path --generate_outputs True
+python ./MAPPO/train/train.py --model_dir your_model_path --generate_outputs True
 ```
 You can also view your trained trajectories through the command below, followed by the previous command.
 ```sh

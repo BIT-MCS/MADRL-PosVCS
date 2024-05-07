@@ -50,19 +50,17 @@ class EnvRunner(Runner):
                 for agent_id in range(self.num_agents):
                     self.trainer[agent_id].policy.lr_decay(episode, episodes)
             
-
-            track_visit = {en:{i:{uv:{fl:{pois:0 for pois in poi_pos[fl]} for fl in floor_list} for uv in range(agent_num)} \
-                           for i in range(time_interval)} for en in range(self.envs.nenvs)}
-            track_all = {en:{i:{fl:{pois:0 for pois in poi_pos[fl]} for fl in floor_list} for i in range(time_interval)}for en in range(self.envs.nenvs)}
+            if self.envs.env_ref.env.config['use_dual_descent'] and not rend:
+                track_visit = {en:{i:{uv:{fl:{pois:0 for pois in poi_pos[fl]} for fl in floor_list} for uv in range(agent_num)} \
+                            for i in range(time_interval)} for en in range(self.envs.nenvs)}
+                track_all = {en:{i:{fl:{pois:0 for pois in poi_pos[fl]} for fl in floor_list} for i in range(time_interval)}for en in range(self.envs.nenvs)}
 
             obs_list = []
             action_list = []
 
             for step in range(self.episode_length):
                 
-                values, actions, action_log_probs, rnn_states, rnn_states_critic, actions_env = self.collect(step)
-
-                
+                values, actions, action_log_probs, rnn_states, rnn_states_critic, actions_env = self.collect(step)       
                 obs, rewards, dones, infos = self.envs.step(actions_env, rend)
                 obs_list.append(obs)
                 action_list.append(np.array(actions_env))
@@ -87,8 +85,8 @@ class EnvRunner(Runner):
                                         track_visit[envs][period][uav][pos[0]][pos[1]] = 1
                                         track_all[envs][period][pos[0]][pos[1]] += 1
                 
-
-            modified_rewards = np.zeros([rewards.shape[1],self.episode_length,self.envs.nenvs,1]) 
+            if self.envs.env_ref.env.config['use_dual_descent'] or self.envs.env_ref.env.config['use_vime']:
+                modified_rewards = np.zeros([rewards.shape[1],self.episode_length,self.envs.nenvs,1]) 
 
             if self.envs.env_ref.env.config['use_dual_descent'] and not rend:
                 period_reward = {}
@@ -103,11 +101,11 @@ class EnvRunner(Runner):
                         for agent in range(agent_num):
                             for fl in floor_list:
                                 for pos in poi_pos[fl]:
-                                    append_reward = 1 * 1/self.envs.env_ref.env.config['data_last_time'] \
+                                    append_reward = 0.001 * 1/self.envs.env_ref.env.config['data_last_time'] \
                                         * lambdalist[interval][fl][pos] * track_visit[num_envs][interval][agent][fl][pos]  # scale 5
                                     period_reward[interval][step,num_envs,0] += append_reward
                                     count_adding += append_reward
-                    print('Total Dual Rewards for All Agents: ', count_adding)
+                    print(f'Total Dual Rewards for All Agents in env {num_envs}: ', count_adding)
 
                 for agents in range(rewards.shape[1]):
                     for i in range(self.episode_length):                      
@@ -133,31 +131,35 @@ class EnvRunner(Runner):
             
                 trajectory_median = [[] for _ in range(self.envs.env_ref.env.config['agent_num'])]
                 new_obslist = {}
+    
                 for i in range(len(obs_list)):
                     obs = obs_list[i]
                     act = action_list[i]
-
                     for x in range(obs.shape[0]): 
                         for y in range(obs.shape[1]): 
                             newobs = self.envs._vime_obs_process(obs[x,y,:],act[x,y,:],index = x) 
                             new_obslist[(x,y)] = newobs
                             vime_pool.add_sample(newobs[y,:],actions[x,y,:],rewards[x,y,:],dones[x,y])
+
                     if i > 0:
                         for num_envs in range(rewards.shape[0]):
                             for agents in range(rewards.shape[1]):       
                                 vime_reward, trajectory_median = VI.determine_vime_reward(
                                     (agents, transition_prob_model, torch.from_numpy(new_obslist[num_envs,agents]), \
                                         torch.from_numpy(new_obslist[num_envs,agents]), trajectory_median),self.device)   
-                                modified_rewards[agents,i,num_envs,0] +=  vime_reward * 0.05 # VI scale
+                                modified_rewards[agents,i,num_envs,0] +=  vime_reward * 0.05 # VI scale      
 
-            self.update_rewards(modified_rewards)
-            md = VI.convert_to_mean_nn(transition_prob_model)
-            # print(torch.round(md(torch.tensor(self.envs._vime_obs_process(obs_list[0][0,0,:],action_list[0][0,0,:],index = 0)).float())))
+            if self.envs.env_ref.env.config['use_dual_descent'] or self.envs.env_ref.env.config['use_vime']:
+                self.update_rewards(modified_rewards)
             
+                #md = VI.convert_to_mean_nn(transition_prob_model)
+                # print(torch.round(md(torch.tensor(self.envs._vime_obs_process(obs_list[0][0,0,:],action_list[0][0,0,:],index = 0)).float())))
+            
+            self.compute()
             train_infos = self.train()
             # print ("train_infos: ", train_infos)
             
-            if self.envs.env_ref.env.config['use_vime']:
+            if self.envs.env_ref.env.config['use_vime'] and not rend:
                 VI.compute(transition_prob_model, vime_pool, device = self.device)
 
             
@@ -310,6 +312,8 @@ class EnvRunner(Runner):
             else:
                 masked = None
 
+        
+
             self.buffer[agent_id].insert(share_obs,
                                          np.array(list(obs[:, agent_id])),
                                          rnn_states[:, agent_id],
@@ -324,6 +328,7 @@ class EnvRunner(Runner):
     def update_rewards(self, new_reward):
         print(new_reward.shape,new_reward[0].shape)
         for agent_id in range(self.num_agents):
+            print((new_reward[agent_id] == new_reward[agent_id,:]).all())
             self.buffer[agent_id].update_rewards(new_reward[agent_id])
 
     @torch.no_grad()

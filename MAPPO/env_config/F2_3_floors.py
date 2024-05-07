@@ -24,7 +24,7 @@ config = {
 'malicious_exist': False, 
 'use_malicious_evaluate': False, 
 'use_masked_action': True, 
-'if_read_states': True, # generate new states info each time if environment change, otherwise False.
+'if_read_states': False, # generate new states info each time if environment change, otherwise False.
 'if_read_states_besides_config':True, 
 'uav_energy':1,
 'AP_units':20, 
@@ -32,7 +32,7 @@ config = {
 'uav_init_pos_2': (('site2', 'F3'), (580, 600)),
 'rewarding_methods':'default', 
 'use_dual_descent': True, 
-'dual_descent_learning_rate': 0.005,
+'dual_descent_learning_rate': 0.001,
 'dual_upperbound': 5,
 'use_vime': True,
 'median_list_length': 40, 
